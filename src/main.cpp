@@ -1,31 +1,65 @@
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiMulti.h>
-#include "X32Comm.h"
-#include "List.hpp"
+#include <ETH.h>
 
+#include <WebServer.h>
+#include <ElegantOTA.h>
+
+#include "X32Comm.h"
 #include "testUtils.h"
 
-const char *ssid = "WIFI_abajo";
-const char *password = "lossecanos";
-const char *X32IP = "192.168.0.155";
+const char *X32IP = "192.168.100.2";
+X32Comm x32comm = X32Comm(X32IP);
 
-unsigned long lastRefresh;
-
-WiFiMulti wifiMulti;
-
-TaskHandle_t X32CommTask;
-
-void X32CommTaskCode(void *parameter)
+void WiFiEvent(WiFiEvent_t event)
 {
-  X32Comm x32comm = X32Comm(X32IP);
 
-  x32comm.init();
-  for (;;)
+  switch (event)
   {
-    x32comm.handle();
+  case ARDUINO_EVENT_ETH_START:
+    Serial.println("ETH Started");
+    // set eth hostname here
+    ETH.setHostname("esp32-ethernet");
+    break;
+  case ARDUINO_EVENT_ETH_CONNECTED:
+    Serial.println("ETH Connected");
+    break;
+  case ARDUINO_EVENT_ETH_GOT_IP:
+    Serial.print("ETH MAC: ");
+    Serial.print(ETH.macAddress());
+    Serial.print(", IPv4: ");
+    Serial.print(ETH.localIP());
+    if (ETH.fullDuplex())
+    {
+      Serial.print(", FULL_DUPLEX");
+    }
+    Serial.print(", ");
+    Serial.print(ETH.linkSpeed());
+    Serial.println("Mbps");
+    // eth_connected = true;
+    break;
+  case ARDUINO_EVENT_ETH_DISCONNECTED:
+    Serial.println("ETH Disconnected");
+    // eth_connected = false;
+    break;
+  case ARDUINO_EVENT_ETH_STOP:
+    Serial.println("ETH Stopped");
+    // eth_connected = false;
+    break;
+  default:
+    Serial.print("Unknow event: ");
+    Serial.println(event);
+    break;
   }
 }
+
+WebServer server(80);
+
+IPAddress local_IP(192, 168, 100, 1);
+IPAddress gateway(192, 168, 100, 1);
+IPAddress subnet(255, 255, 0, 0);
+IPAddress primaryDNS(8, 8, 8, 8);
+
+unsigned long ota_progress_millis = 0;
 
 void setup()
 {
@@ -35,33 +69,52 @@ void setup()
     ; // Wait for serial to connect
   }
 
-  // WIFI setup
-  wifiMulti.addAP("WIFI_abajo", "lossecanos");
-  wifiMulti.addAP("JDC_REMOTE", "directos");
-  wifiMulti.addAP("JDC-REMOTE", "directos");
+  WiFi.onEvent(WiFiEvent);
 
-  WiFi.begin(ssid, password);
-  while (wifiMulti.run() != WL_CONNECTED)
+  if (!ETH.begin(1, 16, 23, 18, ETH_PHY_LAN8720))
   {
-    delay(500);
-    Serial.print(".");
+    Serial.println("Failed to configure Ethernet");
   }
-  Serial.printf(" connected!\n");
+  else
+  {
+    ETH.setHostname("x32-scribble");
+    if (ETH.localIP().toString().equals("0.0.0.0"))
+    {
+      Serial.println("IP is empty!");
+      if (!ETH.config(local_IP, gateway, subnet, primaryDNS, primaryDNS))
+      {
+        Serial.println("Failed to configure Static IP");
+      }
+      else
+      {
+        Serial.print(" Static IP assigned");
+        Serial.println(local_IP);
+      }
+    }
+    else
+    {
+      Serial.print("  DHCP assigned IP ");
+      Serial.println(ETH.localIP());
+    }
+  }
 
-  xTaskCreatePinnedToCore(
-      X32CommTaskCode, /* Function to implement the task */
-      "X32CommTask",   /* Name of the task */
-      10000,           /* Stack size in words */
-      NULL,            /* Task input parameter */
-      0,               /* Priority of the task */
-      &X32CommTask,    /* Task handle. */
-      0);              /* Core where the task should run */
+  server.on("/", []()
+            { server.send(200, "text/plain", "Hi! This is ElegantOTA Demo."); });
 
-  lastRefresh = millis();
+  server.onNotFound([]()
+                    { server.send(404, "text/plain", "Not found!"); });
+  ElegantOTA.begin(&server);
+  server.begin();
+  Serial.println("HTTP server started");
+
+  x32comm.init();
+
+  Serial.println("Everyting ready!");
 }
 
-void loop()
+void loop(void)
 {
-
-  yield();
+  server.handleClient();
+  ElegantOTA.loop();
+  x32comm.handle();
 }

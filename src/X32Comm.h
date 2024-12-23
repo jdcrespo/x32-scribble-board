@@ -6,7 +6,7 @@
 #include <OSCBundle.h>
 #include "X32Utils.h"
 #include "X32Scribble.h"
-#include "List.hpp"
+#include <X32State/X32State.hpp>
 
 #define LOCAL_UDP_PORT 10023
 
@@ -23,22 +23,21 @@
 class X32Comm
 {
 private:
+  X32State state;
+
   unsigned long lastXremote;
   unsigned long lastInitialMsg;
   unsigned long lastPing;
   unsigned long lastPingReponse;
-  unsigned long lastQueueSend;
-  uint8_t chFaderBank;
-  uint8_t grpFaderBank;
   const char *X32IP;
-  List<String> queue;
   X32Scribble scribble = X32Scribble(4, 0x70, 0x71);
   WiFiUDP socket;
   OSCMessage msg;
   OSCErrorCode error;
-  bool initialized;
   bool connected;
-  int currentSenderIndex = 0;
+  bool firstRefreshDone;
+
+  void handleRefreshScribble();
 
   // Internal communication functions
   void handleXremote();
@@ -47,15 +46,8 @@ private:
 
   void handleInfo();
   void handleFaderBank(OSCMessage &msg);
-  int getChannelInCurrentBank(String address);
   void handleChannelConfig(OSCMessage &msg);
   void handleOSCRecv();
-  void handleQueueMessage(String msg);
-
-  int findQueueIndx(String msg);
-
-  void handleReloadChBank();
-  void handleReloadGrpBank();
 
 public:
   X32Comm(const char *X32IP);
@@ -65,9 +57,6 @@ public:
   void sendMsg(OSCMessage &msg);
   bool isConnected();
   void handle();
-  void handleQueueSender();
-
-  void debug();
 };
 
 #endif

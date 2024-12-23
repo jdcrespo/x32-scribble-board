@@ -156,7 +156,8 @@ enum ChFaderBanks
   AUX_IN_USB,
   FX_RET,
   BUS_MASTER_1_8,
-  BUS_MASTER_9_16
+  BUS_MASTER_9_16,
+  EMPTY_CH_BANK
 };
 
 enum GrpFaderBanks
@@ -166,7 +167,8 @@ enum GrpFaderBanks
   BUS_9_16,
   MATRIX_MAIN_C,
   NONE,
-  CH_1_16_SPREAD
+  CH_1_16_SPREAD,
+  EMPTY_GRP_BANK
 };
 
 struct ChFaderBank
@@ -200,7 +202,7 @@ struct InternalChannelInfo
   bool initialized;
 };
 
-#define totalChannelCount 80
+#define TOTAL_CHANNEL_COUNT 80
 
 enum X32ChannelsEnum
 {

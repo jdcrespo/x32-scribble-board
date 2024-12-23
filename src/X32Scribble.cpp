@@ -1,5 +1,7 @@
 #include "X32Scribble.h"
 // #define DEBUG
+#define I2C_SDA 14
+#define I2C_SCL 4
 
 X32Scribble::X32Scribble(uint8_t LED_DATA_PIN, uint8_t MUX_ADDR_A, uint8_t MUX_ADDR_B)
 {
@@ -19,10 +21,10 @@ X32Scribble::~X32Scribble()
 void X32Scribble::init()
 {
 
-  Wire.begin();
+  Wire.begin(I2C_SDA, I2C_SCL);
 
   // TODO assign ledPin from class variable
-  FastLED.addLeds<WS2812, 4, RGB>(leds, maxAvailableChannels);
+  FastLED.addLeds<WS2812, 15, RGB>(leds, maxAvailableChannels);
 
   for (int i = 0; i < maxAvailableChannels; i++)
   {
@@ -47,6 +49,7 @@ void X32Scribble::init()
 
 void X32Scribble::setChannel(uint8_t channel, String name, X32_SOURCE source, X32_COLOR color)
 {
+  Serial.println("ch: " + String(channel) + " name: " + String(name) + " color: " + String(color) + " source: " + String(source));
   if (channel >= 0 && channel < MAX_CHANNELS)
   {
     channelName[channel] = name;
@@ -114,16 +117,6 @@ void X32Scribble::refresh()
   }
 }
 
-void X32Scribble::setChFaderBank(uint8_t bank)
-{
-  chFaderBank = bank;
-}
-
-void X32Scribble::setGrpFaderBank(uint8_t bank)
-{
-  grpFaderBank = bank;
-}
-
 Color X32Scribble::getMappedColor(X32_COLOR x32Color)
 {
   for (uint8_t i = 0; i < 16; i++)
@@ -138,13 +131,13 @@ Color X32Scribble::getMappedColor(X32_COLOR x32Color)
 
 void X32Scribble::updateChannel(uint8_t channel)
 {
-  /*   for (uint8_t i = 0; i < maxAvailableChannels; i++)
-    {
-      Serial.println(String(i) + " -> [" +
-                     String(channelName[i]) + "," +
-                     String(channelColor[i]) + "," +
-                     String(channelSource[i]) + "]");
-    } */
+  for (uint8_t i = 0; i < maxAvailableChannels; i++)
+  {
+    Serial.println(String(i) + " -> [" +
+                   String(channelName[i]) + "," +
+                   String(channelColor[i]) + "," +
+                   String(channelSource[i]) + "]");
+  }
 
   selectMux(LCD_INDEX_MAP[channel]);
 
@@ -160,25 +153,18 @@ void X32Scribble::updateChannel(uint8_t channel)
   display.setCursor(SCREEN_START_X, SCREEN_START_Y);
 
   String input = String(inputMap[channelSource[channel]]);
-
+  Serial.println("inputStr: " + input + " src: " + String(channelSource[channel]));
   String channelStrip = "";
 
-  if (channel > 1)
+  int spaceCount = 6 - input.length();
+  for (int i = 0; i < spaceCount; i++)
   {
-    int spaceCount = 6 - input.length();
-    for (int i = 0; i < spaceCount; i++)
-    {
-      channelStrip += " ";
-    }
+    channelStrip += " ";
+  }
 
-    channelStrip += input;
-  }
-  else
-  {
-    display.setTextSize(1);
-    channelStrip = (channel == 0 ? "chFB: " : "grpFB: ") +
-                   String(channel == 0 ? chFaderBank : grpFaderBank);
-  }
+  channelStrip += input;
+  Serial.println(channelStrip);
+
   display.write(channelStrip.c_str());
 
   String label = channelName[channel];

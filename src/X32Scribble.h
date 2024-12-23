@@ -28,9 +28,6 @@ private:
   X32_COLOR channelColor[MAX_CHANNELS];
   uint8_t maxAvailableChannels;
 
-  uint8_t chFaderBank;
-  uint8_t grpFaderBank;
-
   Adafruit_SSD1306 display;
   CRGB leds[MAX_CHANNELS];
 
@@ -40,6 +37,7 @@ private:
   void writeToMux(uint8_t addr, uint8_t cmd);
   void selectMux(uint8_t channel);
   Color getMappedColor(X32_COLOR x32Color);
+  void updateChannel(uint8_t channel);
 
 public:
   X32Scribble(uint8_t LED_DATA_PIN, uint8_t MUX_ADDR_A, uint8_t MUX_ADDR_B);
@@ -78,14 +76,6 @@ public:
    * @param color Color of channel (0, 15)
    */
   void refresh();
-
-  void setChFaderBank(uint8_t bank);
-  void setGrpFaderBank(uint8_t bank);
-
-  /**
-   * Print and set a single channel
-   */
-  void updateChannel(uint8_t channel);
 };
 
 #endif
