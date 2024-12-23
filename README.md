@@ -15,25 +15,18 @@ The idea is to daisy chain 2 panels, completing the 16 available faders in the X
 
 The PCB is designed with easyEda, trying to fit everything in a board smaller than 100x100 mm to reduce the fabrication cost, due to the length of the fader banks, the PCB is panelized, resulting in a size of 100x43 mm
 
-<figure>
-  <img src="docs/images/pcb-top.png" alt="">
-  <figcaption>Top layer</figcaption>
-</figure>
+> ![pcb top layer](docs/images/pcb-top.png)
+> PCB Top layer
 
-<figure>
-  <img src="docs/images/pcb-bottom.png" alt="">
-  <figcaption>Bottom layer</figcaption>
-</figure>
+> ![pcb bottom layer](docs/images/pcb-bottom.png)
+> PCB Bottom layer
 
-<figure>
-  <img src="docs/images/pcb-3d.png" alt="">
-  <figcaption>3D simulation of PCB</figcaption>
-</figure>
+> ![pcb 3d simulation](docs/images/pcb-3d.png)
+> 3D simulation of PCB
 
-<figure>
-  <img src="docs/images/detail.jpg" alt="">
-  <figcaption>Fully assembled PCB</figcaption>
-</figure>
+> ![pcb fully assembled](docs/images/detail.jpg)
+> Fully assembled PCB
+
 
 [Link to schematics](docs/schematic_X32-scribble.pdf)
 
